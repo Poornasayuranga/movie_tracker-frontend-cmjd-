@@ -43,7 +43,7 @@ export default function Layout() {
       {/* ── TOP NAVBAR ── */}
       <header
         className="flex items-center justify-between px-4 md:px-6 py-0 h-[64px] flex-shrink-0 relative z-50"
-        style={{ background: 'linear-gradient(135deg, #2A3AC7 0%, #3B4FE8 50%, #4C5FFF 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #0F1D5C 0%, #162480 50%, #1A2A96 100%)' }}
       >
         {/* Left: Logo + hamburger */}
         <div className="flex items-center gap-3">
@@ -153,7 +153,7 @@ export default function Layout() {
             ${sidebarOpen ? 'w-56' : 'w-0 md:w-16'}
             absolute md:relative overflow-hidden
           `}
-          style={{ background: 'linear-gradient(180deg, #2A3AC7 0%, #1E2E9E 60%, #171E7A 100%)' }}
+          style={{ background: 'linear-gradient(180deg, #1A2878 0%, #1E3194 60%, #243BAD 100%)' }}
         >
           <div className="flex flex-col h-full p-3 min-w-[56px]">
             {/* Nav items */}

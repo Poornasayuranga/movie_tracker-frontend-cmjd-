@@ -1,4 +1,4 @@
-import { Ticket, Tag, Percent, CreditCard, Star, Zap, ChevronRight, Check } from 'lucide-react'
+import { Ticket, CreditCard, Star, Zap, Check } from 'lucide-react'
 
 const cinemas = [
   {
@@ -31,11 +31,6 @@ const planColors = {
   VIP:      { from: '#D97706', to: '#F59E0B', badge: '#FEF9C3', badgeText: '#92400E' },
 }
 
-const offers = [
-  { id: 1, code: 'MOVIE20', discount: '20% OFF', desc: 'On all weekend shows', expires: 'Oct 31, 2026', color: '#3B4FE8' },
-  { id: 2, code: 'VIP50', discount: '$50 OFF', desc: 'On VIP tickets above $200', expires: 'Nov 15, 2026', color: '#7C3AED' },
-  { id: 3, code: 'FIRST10', discount: '10% OFF', desc: 'First-time booking discount', expires: 'Dec 31, 2026', color: '#059669' },
-]
 
 export default function TicketsPage() {
   return (
@@ -46,46 +41,6 @@ export default function TicketsPage() {
           Tickets & Pricing
         </h1>
         <p className="text-gray-500 text-sm mt-0.5">Compare plans and grab the best deals</p>
-      </div>
-
-      {/* Offer coupons */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {offers.map(offer => (
-          <div
-            key={offer.id}
-            id={`offer-${offer.id}`}
-            className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer group relative overflow-hidden"
-          >
-            <div
-              className="absolute top-0 right-0 w-20 h-20 rounded-full opacity-10"
-              style={{ background: offer.color, transform: 'translate(30%, -30%)' }}
-            />
-            <div className="flex items-center gap-2 mb-2">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ background: `${offer.color}18` }}
-              >
-                <Percent size={16} style={{ color: offer.color }} />
-              </div>
-              <span
-                className="text-lg font-black"
-                style={{ color: offer.color }}
-              >
-                {offer.discount}
-              </span>
-            </div>
-            <p className="text-sm text-gray-700 font-semibold">{offer.desc}</p>
-            <div className="flex items-center justify-between mt-3">
-              <code
-                className="text-xs font-bold px-2 py-1 rounded-lg border border-dashed"
-                style={{ color: offer.color, borderColor: offer.color, background: `${offer.color}10` }}
-              >
-                {offer.code}
-              </code>
-              <span className="text-[10px] text-gray-400">Exp: {offer.expires}</span>
-            </div>
-          </div>
-        ))}
       </div>
 
       {/* Cinema pricing */}

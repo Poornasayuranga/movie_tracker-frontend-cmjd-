@@ -1,4 +1,4 @@
-import { Settings, Bell, Moon, Sun, Globe, Shield, User, Palette, ChevronRight, Save } from 'lucide-react'
+import { Settings, Bell, User, Save } from 'lucide-react'
 import { useState } from 'react'
 
 const settingsSections = [
@@ -14,28 +14,9 @@ const settingsSections = [
     icon: Bell,
     color: '#7C3AED',
   },
-  {
-    id: 'appearance',
-    title: 'Appearance',
-    icon: Palette,
-    color: '#0EA5E9',
-  },
-  {
-    id: 'privacy',
-    title: 'Privacy & Security',
-    icon: Shield,
-    color: '#10B981',
-  },
-  {
-    id: 'language',
-    title: 'Language & Region',
-    icon: Globe,
-    color: '#F59E0B',
-  },
 ]
 
 export default function SettingsPage() {
-  const [darkMode, setDarkMode] = useState(false)
   const [notifMovies, setNotifMovies] = useState(true)
   const [notifShows, setNotifShows] = useState(true)
   const [notifDeals, setNotifDeals] = useState(false)
@@ -108,6 +89,16 @@ export default function SettingsPage() {
                   </div>
                 ))}
               </div>
+              {/* Bio */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Bio</label>
+                <textarea
+                  id="input-bio"
+                  rows={3}
+                  defaultValue="Movie enthusiast and cinema lover. Always on the lookout for the next great film."
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#3B4FE8] focus:ring-2 focus:ring-[#3B4FE8]/20 transition-all resize-none"
+                />
+              </div>
               <button
                 id="save-profile-btn"
                 className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[#3B4FE8] text-white text-sm font-bold hover:bg-[#2D3FD6] transition-all duration-200 shadow-lg shadow-blue-200"
@@ -146,74 +137,6 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Appearance */}
-          {activeSection === 'appearance' && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-              <h2 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Appearance</h2>
-              <div className="flex items-center justify-between py-3 border-b border-gray-50">
-                <div className="flex items-center gap-3">
-                  {darkMode ? <Moon size={18} className="text-purple-500" /> : <Sun size={18} className="text-amber-500" />}
-                  <div>
-                    <p className="font-semibold text-gray-700 text-sm">Dark Mode</p>
-                    <p className="text-gray-400 text-xs">{darkMode ? 'Dark theme active' : 'Light theme active'}</p>
-                  </div>
-                </div>
-                <button
-                  id="toggle-dark-mode"
-                  onClick={() => setDarkMode(!darkMode)}
-                  className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${darkMode ? 'bg-purple-600' : 'bg-gray-200'}`}
-                >
-                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 ${darkMode ? 'translate-x-6' : 'translate-x-0'}`} />
-                </button>
-              </div>
-              <p className="text-gray-400 text-xs">More appearance options coming soon.</p>
-            </div>
-          )}
-
-          {/* Privacy */}
-          {activeSection === 'privacy' && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-              <h2 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Privacy & Security</h2>
-              {['Change Password', 'Two-Factor Authentication', 'Connected Accounts', 'Download My Data', 'Delete Account'].map((item, i) => (
-                <button
-                  key={item}
-                  id={`privacy-${item.toLowerCase().replace(/\s+/g, '-')}-btn`}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all duration-150 text-sm font-semibold text-left ${
-                    i === 4 ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-gray-100 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  {item}
-                  <ChevronRight size={16} className="text-gray-400" />
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Language */}
-          {activeSection === 'language' && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-              <h2 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Language & Region</h2>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Language</label>
-                <select id="select-language" className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#3B4FE8] focus:ring-2 focus:ring-[#3B4FE8]/20">
-                  <option>English (US)</option>
-                  <option>Sinhala</option>
-                  <option>Tamil</option>
-                  <option>French</option>
-                  <option>German</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Currency</label>
-                <select id="select-currency" className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#3B4FE8] focus:ring-2 focus:ring-[#3B4FE8]/20">
-                  <option>USD ($)</option>
-                  <option>LKR (Rs.)</option>
-                  <option>EUR (€)</option>
-                  <option>GBP (£)</option>
-                </select>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
