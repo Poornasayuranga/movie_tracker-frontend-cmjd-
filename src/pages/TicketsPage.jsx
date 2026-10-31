@@ -1,112 +1,195 @@
-import { Ticket, CreditCard, Star, Zap, Check } from 'lucide-react'
 
-const cinemas = [
-  {
-    id: 1,
-    name: 'PVR Cinemas',
-    location: 'City Mall, 3rd Floor',
-    rating: 4.5,
-    plans: [
-      { type: 'Standard', price: '$8.99', features: ['Regular Screen', '1 Popcorn', 'Online Booking'] },
-      { type: 'Premium', price: '$14.99', features: ['4DX Screen', 'Combo Meal', 'Priority Entry', 'Recliner Seat'] },
-      { type: 'VIP', price: '$24.99', features: ['IMAX Screen', 'Full Meal', 'Private Lounge', 'Valet Parking'] },
-    ],
-  },
-  {
-    id: 2,
-    name: 'Regal Cinemas',
-    location: 'Downtown Square',
-    rating: 4.3,
-    plans: [
-      { type: 'Standard', price: '$9.50', features: ['Regular Screen', 'Basic Snack', 'Online Booking'] },
-      { type: 'Premium', price: '$16.00', features: ['Dolby Atmos', 'Combo Meal', 'VIP Lane', 'Recliner Seat'] },
-      { type: 'VIP', price: '$29.99', features: ['IMAX Screen', 'Fine Dining', 'Premium Lounge', 'Free Parking'] },
-    ],
-  },
-]
+import { useState } from 'react'
 
-const planColors = {
-  Standard: { from: '#3B4FE8', to: '#5B6FFF', badge: '#EFF6FF', badgeText: '#3B4FE8' },
-  Premium:  { from: '#7C3AED', to: '#A78BFA', badge: '#F5F3FF', badgeText: '#7C3AED' },
-  VIP:      { from: '#D97706', to: '#F59E0B', badge: '#FEF9C3', badgeText: '#92400E' },
-}
+import {
+  Ticket,
+  CalendarDays,
+  Film,
+  Clapperboard,
+  X,
+  Search,
+  MapPin,
+  Clock,
+  CreditCard,
+} from 'lucide-react'
 
+import BookingSearchForm from '../components/BookingSearchForm'
 
 export default function TicketsPage() {
+
+  // Search form states
+  const [date, setDate] = useState('')
+  const [movieName, setMovieName] = useState('')
+  const [showName, setShowName] = useState('')
+
+  // Modal state
+  const [showResults, setShowResults] = useState(false)
+
+  function handleSearch() {
+    setShowResults(true)
+  }
+
   return (
     <div className="space-y-6 animate-fade-in-up">
+
+      {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
           <Ticket className="text-[#3B4FE8]" size={26} />
           Tickets & Pricing
         </h1>
-        <p className="text-gray-500 text-sm mt-0.5">Compare plans and grab the best deals</p>
+
+        <p className="text-gray-500 text-sm mt-1">
+          Find available movie shows and book your tickets.
+        </p>
       </div>
 
-      {/* Cinema pricing */}
-      {cinemas.map(cinema => (
-        <div key={cinema.id} id={`cinema-${cinema.id}`} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-            <div>
-              <h2 className="font-bold text-gray-800">{cinema.name}</h2>
-              <p className="text-gray-500 text-xs">{cinema.location}</p>
+      {/* Featured Banner */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#172554] via-[#293FA8] to-[#3B4FE8] p-6 md:p-7 text-white">
+
+        <div className="absolute -right-8 -top-12 w-52 h-52 rounded-full bg-white/10 blur-2xl" />
+
+        <div className="relative z-10 flex items-center justify-between gap-4">
+
+          <div>
+            <div className="flex items-center gap-2 text-blue-200 text-xs font-semibold uppercase tracking-widest mb-2">
+              <Ticket size={15} />
+              Movie Ticket Booking
             </div>
-            <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-lg">
-              <Star size={13} className="text-amber-400 fill-amber-400" />
-              <span className="text-sm font-bold text-amber-600">{cinema.rating}</span>
-            </div>
+
+            <h2 className="text-xl md:text-2xl font-bold mb-2">
+              Your Next Movie Experience Starts Here
+            </h2>
+
+            <p className="text-blue-100 text-sm max-w-lg">
+              Select your preferred date, movie and show to explore available tickets and pricing.
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 divide-y md:divide-y-0 md:divide-x divide-gray-100">
-            {cinema.plans.map(plan => {
-              const colors = planColors[plan.type]
-              return (
-                <div
-                  key={plan.type}
-                  id={`plan-${cinema.id}-${plan.type.toLowerCase()}`}
-                  className="p-5 hover:bg-gray-50/50 transition-colors duration-150"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <span
-                      className="text-xs font-bold px-2.5 py-0.5 rounded-full"
-                      style={{ background: colors.badge, color: colors.badgeText }}
-                    >
-                      {plan.type}
-                    </span>
-                    {plan.type === 'Premium' && (
-                      <span className="text-[10px] bg-purple-100 text-purple-600 font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                        <Zap size={9} /> Popular
-                      </span>
-                    )}
-                  </div>
-                  <p
-                    className="text-3xl font-black mb-1"
-                    style={{ background: `linear-gradient(135deg, ${colors.from}, ${colors.to})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-                  >
-                    {plan.price}
-                  </p>
-                  <p className="text-gray-400 text-xs mb-4">per person</p>
-                  <ul className="space-y-2 mb-4">
-                    {plan.features.map(f => (
-                      <li key={f} className="flex items-center gap-2 text-xs text-gray-600">
-                        <Check size={13} className="text-emerald-500 flex-shrink-0" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    id={`book-${cinema.id}-${plan.type.toLowerCase()}-btn`}
-                    className="w-full py-2 rounded-xl text-sm font-bold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg flex items-center justify-center gap-1"
-                    style={{ background: `linear-gradient(135deg, ${colors.from}, ${colors.to})` }}
-                  >
-                    <CreditCard size={14} />
-                    Book Now
-                  </button>
-                </div>
-              )
-            })}
+
+          <div className="hidden sm:flex w-16 h-16 rounded-2xl bg-white/10 items-center justify-center flex-shrink-0">
+            <Ticket size={36} className="text-white" />
           </div>
+
         </div>
-      ))}
+      </div>
+
+      {/* Booking Search */}
+      <div className="space-y-3">
+
+        <div>
+          <h2 className="text-lg font-bold text-gray-800">
+            Find Your Bookings
+          </h2>
+
+          <p className="text-gray-500 text-sm">
+            Enter your preferred booking details below.
+          </p>
+        </div>
+
+        <BookingSearchForm
+          date={date}
+          setDate={setDate}
+          movieName={movieName}
+          setMovieName={setMovieName}
+          showName={showName}
+          setShowName={setShowName}
+          onSearch={handleSearch}
+        />
+
+      </div>
+
+      {/* Booking Results Modal */}
+      {showResults && (
+
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+
+          <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden">
+
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+
+              <div>
+                <h2 className="text-lg font-bold text-gray-800">
+                  Booking Results
+                </h2>
+
+                <p className="text-gray-500 text-xs mt-1">
+                  Available tickets and pricing details
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowResults(false)}
+                className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200"
+              >
+                <X size={18} />
+              </button>
+
+            </div>
+
+            {/* Selected Booking Details */}
+            <div className="p-5 space-y-4">
+
+              <div className="bg-blue-50 rounded-xl p-4 space-y-3">
+
+                <div className="flex items-center gap-3 text-sm text-gray-700">
+                  <CalendarDays size={17} className="text-[#3B4FE8]" />
+                  <span>{date}</span>
+                </div>
+
+                <div className="flex items-center gap-3 text-sm text-gray-700">
+                  <Film size={17} className="text-[#3B4FE8]" />
+                  <span>{movieName}</span>
+                </div>
+
+                <div className="flex items-center gap-3 text-sm text-gray-700">
+                  <Clapperboard size={17} className="text-[#3B4FE8]" />
+                  <span>{showName}</span>
+                </div>
+
+              </div>
+
+              {/* Future API Results */}
+              <div className="text-center py-8">
+
+                <div className="w-14 h-14 mx-auto rounded-full bg-blue-50 flex items-center justify-center mb-3">
+                  <Ticket size={27} className="text-[#3B4FE8]" />
+                </div>
+
+                <h3 className="font-bold text-gray-800">
+                  Booking Details
+                </h3>
+
+                <p className="text-gray-500 text-sm mt-2 max-w-sm mx-auto">
+                  Available theatres, ticket prices, seat categories and booking conditions will appear here.
+                </p>
+
+                <p className="text-xs text-gray-400 mt-3">
+                  Waiting for backend API integration.
+                </p>
+
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-gray-100 flex justify-end">
+
+              <button
+                onClick={() => setShowResults(false)}
+                className="px-5 py-2.5 rounded-xl bg-[#3B4FE8] text-white text-sm font-semibold hover:bg-[#2D3FD6] transition-colors"
+              >
+                Close
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
     </div>
   )
 }
