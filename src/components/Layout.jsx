@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 
 const sidebarItems = [
+  { label: 'Home', icon: Home, path: '/' },
   { label: 'Movies', icon: Film, path: '/movies' },
   { label: 'Shows', icon: Tv2, path: '/shows' },
   { label: 'Theatre', icon: Theater, path: '/theatre' },
@@ -162,6 +163,7 @@ export default function Layout() {
                 <NavLink
                   key={path}
                   to={path}
+                  end={path === '/'}
                   id={`sidebar-${label.toLowerCase().replace(/\s+/g, '-')}-btn`}
                   style={{ animationDelay: `${idx * 80}ms` }}
                   className={({ isActive }) =>

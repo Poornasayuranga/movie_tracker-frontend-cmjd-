@@ -1,6 +1,6 @@
-import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
+import HomePage from './pages/HomePage'
 import MoviesPage from './pages/MoviesPage'
 import ShowsPage from './pages/ShowsPage'
 import TheatrePage from './pages/TheatrePage'
@@ -14,7 +14,8 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<MoviesPage />} />
+          <Route index element={<HomePage />} />
+          <Route path="home" element={<HomePage />} />
           <Route path="movies" element={<MoviesPage />} />
           <Route path="shows" element={<ShowsPage />} />
           <Route path="theatre" element={<TheatrePage />} />
