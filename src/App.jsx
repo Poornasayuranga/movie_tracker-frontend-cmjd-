@@ -8,6 +8,8 @@ import TicketsPage from './pages/TicketsPage'
 import SettingsPage from './pages/SettingsPage'
 import AboutPage from './pages/AboutPage'
 import ContactPage from './pages/ContactPage'
+import BookingDetailsPage from './pages/BookingDetailsPage'
+
 
 export default function App() {
   return (
@@ -23,6 +25,7 @@ export default function App() {
           <Route path="settings" element={<SettingsPage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="contact" element={<ContactPage />} />
+          <Route path="booking-details" element={<BookingDetailsPage />}/>
         </Route>
       </Routes>
     </BrowserRouter>
