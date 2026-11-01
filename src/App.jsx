@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import HomePage from './pages/HomePage'
+import LoginPage from './pages/LoginPage'
 import MoviesPage from './pages/MoviesPage'
 import ShowsPage from './pages/ShowsPage'
 import TheatrePage from './pages/TheatrePage'
@@ -15,6 +16,11 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Dedicated Authentication Routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<LoginPage initialMode="register" />} />
+
+        {/* Main Application Layout Routes */}
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="home" element={<HomePage />} />
@@ -22,10 +28,10 @@ export default function App() {
           <Route path="shows" element={<ShowsPage />} />
           <Route path="theatre" element={<TheatrePage />} />
           <Route path="tickets" element={<TicketsPage />} />
+          <Route path="booking-details" element={<BookingDetailsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="contact" element={<ContactPage />} />
-          <Route path="booking-details" element={<BookingDetailsPage />}/>
         </Route>
       </Routes>
     </BrowserRouter>

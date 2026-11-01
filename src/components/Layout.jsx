@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, NavLink, useNavigate, Outlet } from 'react-router-dom'
 import {
   Film,
@@ -10,6 +10,8 @@ import {
   Info,
   Mail,
   LogOut,
+  LogIn,
+  User,
   Bell,
   Search,
   Clapperboard,
@@ -38,6 +40,38 @@ export default function Layout() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [notifications] = useState(3)
+
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('movieTracker_user')
+      return saved ? JSON.parse(saved) : null
+    } catch {
+      return null
+    }
+  })
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      try {
+        const saved = localStorage.getItem('movieTracker_user')
+        setCurrentUser(saved ? JSON.parse(saved) : null)
+      } catch {
+        setCurrentUser(null)
+      }
+    }
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem('movieTracker_user')
+    } catch (err) {
+      console.error(err)
+    }
+    setCurrentUser(null)
+    navigate('/login')
+  }
 
   return (
     <div className="flex flex-col h-screen bg-[#0F0F1A] overflow-hidden">
@@ -133,15 +167,38 @@ export default function Layout() {
             )}
           </button>
 
-          {/* Logout */}
-          <button
-            id="navbar-logout-btn"
-            onClick={() => navigate('/')}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/15 border border-white/25 text-white text-sm font-semibold hover:bg-red-500/80 hover:border-red-400 transition-all duration-300 group"
-          >
-            <LogOut size={15} className="group-hover:translate-x-0.5 transition-transform duration-200" />
-            <span className="hidden sm:inline">Logout</span>
-          </button>
+          {/* Auth: Profile & Logout if authenticated, Sign In button if not */}
+          {currentUser ? (
+            <div className="flex items-center gap-2">
+              <Link
+                to="/settings"
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold transition-all"
+                title={`Signed in as ${currentUser.name || currentUser.email}`}
+              >
+                <div className="w-5 h-5 rounded-full bg-purple-500/80 flex items-center justify-center text-[10px] font-bold">
+                  <User size={11} className="text-white" />
+                </div>
+                <span className="max-w-[90px] truncate">{currentUser.name || 'Member'}</span>
+              </Link>
+              <button
+                id="navbar-logout-btn"
+                onClick={handleLogout}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 border border-white/25 text-white text-sm font-semibold hover:bg-red-500/80 hover:border-red-400 transition-all duration-300 group"
+              >
+                <LogOut size={15} className="group-hover:translate-x-0.5 transition-transform duration-200" />
+                <span className="hidden sm:inline">Logout</span>
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              id="navbar-login-btn"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 border border-white/25 text-white text-sm font-semibold transition-all duration-200 shadow-sm"
+            >
+              <LogIn size={15} />
+              <span>Sign In</span>
+            </Link>
+          )}
         </div>
       </header>
 
