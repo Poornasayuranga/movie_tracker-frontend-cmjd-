@@ -1,12 +1,40 @@
-
+```jsx
+import { useEffect, useState } from 'react'
 import { Tv2, Plus } from 'lucide-react'
 
 import ShowCard from '../components/ShowCard'
+import { getAllShows } from '../services/showService'
 
 export default function ShowsPage() {
 
-  // Backend data will be fetched here later
-  const shows = []
+  const [shows, setShows] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  // Fetch shows from backend
+  useEffect(() => {
+
+    const fetchShows = async () => {
+
+      try {
+        const data = await getAllShows()
+
+        setShows(data)
+
+      } catch (err) {
+        console.error('Error fetching shows:', err)
+
+        setError('Failed to load TV shows. Please try again.')
+
+      } finally {
+        setLoading(false)
+      }
+
+    }
+
+    fetchShows()
+
+  }, [])
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -46,11 +74,23 @@ export default function ShowsPage() {
 
         <div className="divide-y divide-gray-50">
 
-          {shows.length > 0 ? (
+          {loading ? (
+
+            <p className="text-center text-gray-500 py-10">
+              Loading TV shows...
+            </p>
+
+          ) : error ? (
+
+            <p className="text-center text-red-500 py-10">
+              {error}
+            </p>
+
+          ) : shows.length > 0 ? (
 
             shows.map((show) => (
               <ShowCard
-                key={show.id}
+                key={show.showId}
                 show={show}
               />
             ))
@@ -70,3 +110,4 @@ export default function ShowsPage() {
     </div>
   )
 }
+```
