@@ -1,6 +1,9 @@
 
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+
+import { loginUser, registerUser } from '../services/authService'
+
 import {
   Clapperboard,
   Mail,
@@ -18,7 +21,6 @@ export default function LoginPage({ initialMode = 'login' }) {
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Login or Register mode
   const searchParams = new URLSearchParams(location.search)
 
   const [isSignUp, setIsSignUp] = useState(
@@ -27,24 +29,22 @@ export default function LoginPage({ initialMode = 'login' }) {
     initialMode === 'register'
   )
 
-  // Form states
+  // Form fields
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [userRole, setUserRole] = useState('USER')
 
-  // Other states
+  // UI states
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
   const [forgotPasswordMode, setForgotPasswordMode] = useState(false)
 
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  // Switch between Login and Register
+  // Switch Login / Register
   const switchMode = (mode) => {
     setIsSignUp(mode)
     setErrorMessage('')
@@ -52,102 +52,124 @@ export default function LoginPage({ initialMode = 'login' }) {
     setForgotPasswordMode(false)
   }
 
-  // Login and Register form submission
-  const handleSubmit = (e) => {
+  // Login and Register
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
     setErrorMessage('')
     setSuccessMessage('')
 
-    if (isSignUp && !username.trim()) {
+    // Username validation
+    if (!username.trim()) {
       setErrorMessage('Please enter your username.')
       return
     }
 
-    if (!email.trim()) {
-      setErrorMessage('Please enter your email.')
-      return
+    // Email validation
+    if (isSignUp) {
+      if (!email.trim()) {
+        setErrorMessage('Please enter your email.')
+        return
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+      if (!emailRegex.test(email)) {
+        setErrorMessage('Please enter a valid email address.')
+        return
+      }
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-    if (!emailRegex.test(email)) {
-      setErrorMessage('Please enter a valid email address.')
-      return
-    }
-
+    // Password validation
     if (!password) {
       setErrorMessage('Please enter your password.')
       return
     }
 
-    if (password.length < 6) {
+    if (isSignUp && password.length < 6) {
       setErrorMessage('Password must contain at least 6 characters.')
       return
     }
 
+    // Confirm password validation
     if (isSignUp && password !== confirmPassword) {
       setErrorMessage('Passwords do not match.')
       return
     }
 
-    // Registration request object
-    if (isSignUp) {
-
-      const userDetails = {
-        username: username.trim(),
-        password: password,
-        email: email.trim(),
-        userRole: userRole
-      }
-
-      console.log('Registration Data:', userDetails)
-
-    } else {
-
-      const loginDetails = {
-        username: email.trim(),
-        password: password
-      }
-
-      console.log('Login Data:', loginDetails)
-    }
-
-    // Temporary simulation until backend integration
-    setIsLoading(true)
-
-    setTimeout(() => {
-      setIsLoading(false)
+    try {
+      setIsLoading(true)
 
       if (isSignUp) {
-        setSuccessMessage('Registration form submitted successfully.')
+
+        // Registration API request
+        const userDetails = {
+          username: username.trim(),
+          password: password,
+          email: email.trim(),
+          userRole: 'CUSTOMER'
+          // userRole: 'USER'
+        }
+
+        await registerUser(userDetails)
+
+        setSuccessMessage(
+          'Registration successful! Please sign in.'
+        )
+
+        // Clear fields
+        setUsername('')
+        setEmail('')
+        setPassword('')
+        setConfirmPassword('')
+
+        // Switch to Login
+        setIsSignUp(false)
+
       } else {
-        setSuccessMessage('Login form submitted successfully.')
+
+        // Login API request
+        const loginDetails = {
+          username: username.trim(),
+          password: password
+        }
+
+        // Backend returns JWT token
+        await loginUser(loginDetails)
+
+        // Redirect after successful login
+        const destination = location.state?.from || '/'
+
+        navigate(destination, { replace: true })
       }
 
-    }, 700)
+    } catch (error) {
+
+      console.error('Authentication Error:', error)
+
+      const responseData = error.response?.data
+
+      setErrorMessage(
+        typeof responseData === 'string'
+          ? responseData
+          : responseData?.message ||
+            error.message ||
+            'Something went wrong. Please try again.'
+      )
+
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  // Forgot password
+  // Forgot Password
   const handleForgotPassword = (e) => {
     e.preventDefault()
 
     setErrorMessage('')
-    setSuccessMessage('')
-
-    if (!email.trim()) {
-      setErrorMessage('Please enter your email address.')
-      return
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-    if (!emailRegex.test(email)) {
-      setErrorMessage('Please enter a valid email address.')
-      return
-    }
-
-    setSuccessMessage('Password reset functionality will be available after backend integration.')
+    setSuccessMessage(
+      'Password reset functionality is not connected yet.'
+    )
   }
 
   return (
@@ -160,6 +182,7 @@ export default function LoginPage({ initialMode = 'login' }) {
       <header className="relative z-10 flex justify-between items-center max-w-7xl w-full mx-auto px-6 py-5">
 
         <Link to="/" className="flex items-center gap-3">
+
           <div className="bg-[#3B4FE8]/20 p-3 rounded-xl">
             <Clapperboard size={24} className="text-purple-400" />
           </div>
@@ -168,10 +191,12 @@ export default function LoginPage({ initialMode = 'login' }) {
             <h2 className="text-lg font-bold">
               Movie<span className="text-purple-400">Tracker</span>
             </h2>
+
             <p className="text-xs text-white/40 tracking-widest">
               CINEMA HUB
             </p>
           </div>
+
         </Link>
 
         <Link
@@ -203,12 +228,12 @@ export default function LoginPage({ initialMode = 'login' }) {
                   </div>
 
                   <h1 className="text-3xl font-bold mb-2">
-                    {isSignUp ? 'Create Account' : 'Welcome Back'}
+                    {isSignUp ? 'Create an Account' : 'Welcome Back'}
                   </h1>
 
                   <p className="text-sm text-white/50">
                     {isSignUp
-                      ? 'Create your Movie Tracker account'
+                      ? 'Join Movie Tracker to track films, showtimes & tickets'
                       : 'Sign in to continue to Movie Tracker'}
                   </p>
 
@@ -220,10 +245,11 @@ export default function LoginPage({ initialMode = 'login' }) {
                   <button
                     type="button"
                     onClick={() => switchMode(false)}
-                    className={`py-2 rounded-lg text-sm font-semibold ${!isSignUp
+                    className={`py-2 rounded-lg text-sm font-semibold ${
+                      !isSignUp
                         ? 'bg-[#3B4FE8] text-white'
                         : 'text-white/50'
-                      }`}
+                    }`}
                   >
                     Sign In
                   </button>
@@ -231,10 +257,11 @@ export default function LoginPage({ initialMode = 'login' }) {
                   <button
                     type="button"
                     onClick={() => switchMode(true)}
-                    className={`py-2 rounded-lg text-sm font-semibold ${isSignUp
+                    className={`py-2 rounded-lg text-sm font-semibold ${
+                      isSignUp
                         ? 'bg-[#3B4FE8] text-white'
                         : 'text-white/50'
-                      }`}
+                    }`}
                   >
                     Register
                   </button>
@@ -249,6 +276,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                 <h1 className="text-2xl font-bold mb-2">
                   Forgot Password?
                 </h1>
+
                 <p className="text-sm text-white/50">
                   Enter your email address.
                 </p>
@@ -274,64 +302,56 @@ export default function LoginPage({ initialMode = 'login' }) {
               <form onSubmit={handleSubmit} className="space-y-4">
 
                 {/* Username */}
+                <div>
+                  <label className="block text-sm text-white/70 mb-2">
+                    Username
+                  </label>
+
+                  <div className="relative">
+                    <User
+                      size={17}
+                      className="absolute left-3 top-3 text-white/40"
+                    />
+
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Enter your username"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm outline-none focus:border-[#3B4FE8]"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Email - Register only */}
                 {isSignUp && (
                   <div>
                     <label className="block text-sm text-white/70 mb-2">
-                      Username
+                      Email Address
                     </label>
 
                     <div className="relative">
-                      <User size={17} className="absolute left-3 top-3 text-white/40" />
+                      <Mail
+                        size={17}
+                        className="absolute left-3 top-3 text-white/40"
+                      />
 
                       <input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="Enter your username"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter your email"
                         className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm outline-none focus:border-[#3B4FE8]"
+                        required
                       />
                     </div>
                   </div>
                 )}
 
-                {/* Email */}
-                <div>
-                  <label className="block text-sm text-white/70 mb-2">
-                    Email Address
-                  </label>
-
-                  <div className="relative">
-                    <Mail size={17} className="absolute left-3 top-3 text-white/40" />
-
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your email"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm outline-none focus:border-[#3B4FE8]"
-                    />
-                  </div>
-                </div>
-
-                {/* User Role */}
-                {isSignUp && (
-                  <div>
-                    <label className="block text-sm text-white/70 mb-2">
-                      User Role
-                    </label>
-
-                    <select
-                      value={userRole}
-                      onChange={(e) => setUserRole(e.target.value)}
-                      className="w-full bg-[#121838] border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-[#3B4FE8]"
-                    >
-                      <option value="USER">User</option>
-                    </select>
-                  </div>
-                )}
-
                 {/* Password */}
                 <div>
+
                   <div className="flex justify-between items-center mb-2">
 
                     <label className="text-sm text-white/70">
@@ -356,7 +376,10 @@ export default function LoginPage({ initialMode = 'login' }) {
 
                   <div className="relative">
 
-                    <Lock size={17} className="absolute left-3 top-3 text-white/40" />
+                    <Lock
+                      size={17}
+                      className="absolute left-3 top-3 text-white/40"
+                    />
 
                     <input
                       type={showPassword ? 'text' : 'password'}
@@ -364,6 +387,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
                       className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-11 text-sm outline-none focus:border-[#3B4FE8]"
+                      required
                     />
 
                     <button
@@ -371,7 +395,10 @@ export default function LoginPage({ initialMode = 'login' }) {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-3 text-white/40"
                     >
-                      {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                      {showPassword
+                        ? <EyeOff size={17} />
+                        : <Eye size={17} />
+                      }
                     </button>
 
                   </div>
@@ -386,7 +413,10 @@ export default function LoginPage({ initialMode = 'login' }) {
 
                     <div className="relative">
 
-                      <Lock size={17} className="absolute left-3 top-3 text-white/40" />
+                      <Lock
+                        size={17}
+                        className="absolute left-3 top-3 text-white/40"
+                      />
 
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
@@ -394,30 +424,24 @@ export default function LoginPage({ initialMode = 'login' }) {
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Confirm your password"
                         className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-11 text-sm outline-none focus:border-[#3B4FE8]"
+                        required
                       />
 
                       <button
                         type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                         className="absolute right-3 top-3 text-white/40"
                       >
-                        {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                        {showConfirmPassword
+                          ? <EyeOff size={17} />
+                          : <Eye size={17} />
+                        }
                       </button>
 
                     </div>
                   </div>
-                )}
-
-                {/* Remember Me */}
-                {!isSignUp && (
-                  <label className="flex items-center gap-2 text-sm text-white/60">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                    />
-                    Remember my email
-                  </label>
                 )}
 
                 {/* Submit Button */}
@@ -426,7 +450,13 @@ export default function LoginPage({ initialMode = 'login' }) {
                   disabled={isLoading}
                   className="w-full bg-gradient-to-r from-[#3B4FE8] to-[#7C3AED] hover:opacity-90 rounded-xl py-3 font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  {isLoading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
+                  {isLoading
+                    ? 'Please wait...'
+                    : isSignUp
+                      ? 'Create Account'
+                      : 'Sign In'
+                  }
+
                   {!isLoading && <ArrowRight size={17} />}
                 </button>
 
@@ -448,6 +478,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your registered email"
                     className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-[#3B4FE8]"
+                    required
                   />
                 </div>
 
@@ -481,7 +512,9 @@ export default function LoginPage({ initialMode = 'login' }) {
                 {isSignUp ? (
                   <>
                     Already have an account?
+
                     <button
+                      type="button"
                       onClick={() => switchMode(false)}
                       className="text-purple-300 ml-2"
                     >
@@ -491,7 +524,9 @@ export default function LoginPage({ initialMode = 'login' }) {
                 ) : (
                   <>
                     Don't have an account?
+
                     <button
+                      type="button"
                       onClick={() => switchMode(true)}
                       className="text-purple-300 ml-2"
                     >
