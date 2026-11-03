@@ -1,4 +1,3 @@
-
 import axios from 'axios'
 import { getToken } from '../utils/tokenUtils'
 
@@ -21,6 +20,23 @@ axiosClient.interceptors.request.use(
     return config
   },
   (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// Response interceptor for clear debugging
+axiosClient.interceptors.response.use(
+  (response) => {
+    return response
+  },
+  (error) => {
+    console.error('API Error:', {
+      url: error.config?.url,
+      method: error.config?.method?.toUpperCase(),
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    })
     return Promise.reject(error)
   }
 )

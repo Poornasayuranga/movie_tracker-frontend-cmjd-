@@ -1,13 +1,31 @@
 import axiosClient from '../api/axiosClient'
 
-// Get all theatre events
 export const getAllTheatres = async () => {
-  const response = await axiosClient.get('/api/theatres')
-  return response.data
+  try {
+    const response = await axiosClient.get('/theatres')
+    return response.data
+  } catch (err) {
+    if (err.response?.status === 404) {
+      try {
+        const fallback = await axiosClient.get('/api/theatres')
+        return fallback.data
+      } catch {
+        throw err
+      }
+    }
+    throw err
+  }
 }
 
-// Add a new theatre
 export const addTheatre = async (theatreData) => {
-  const response = await axiosClient.post('/api/theatres', theatreData)
-  return response.data
+  try {
+    const response = await axiosClient.post('/theatres', theatreData)
+    return response.data
+  } catch (err) {
+    if (err.response?.status === 404) {
+      const fallback = await axiosClient.post('/api/theatres', theatreData)
+      return fallback.data
+    }
+    throw err
+  }
 }

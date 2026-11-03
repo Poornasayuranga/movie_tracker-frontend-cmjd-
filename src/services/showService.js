@@ -1,13 +1,31 @@
 import axiosClient from '../api/axiosClient'
 
-// Get all TV shows
 export const getAllShows = async () => {
-  const response = await axiosClient.get('/api/shows')
-  return response.data
+  try {
+    const response = await axiosClient.get('/shows')
+    return response.data
+  } catch (err) {
+    if (err.response?.status === 404) {
+      try {
+        const fallback = await axiosClient.get('/api/shows')
+        return fallback.data
+      } catch {
+        throw err
+      }
+    }
+    throw err
+  }
 }
 
-// Add a new TV show
 export const addShow = async (showData) => {
-  const response = await axiosClient.post('/api/shows', showData)
-  return response.data
+  try {
+    const response = await axiosClient.post('/shows', showData)
+    return response.data
+  } catch (err) {
+    if (err.response?.status === 404) {
+      const fallback = await axiosClient.post('/api/shows', showData)
+      return fallback.data
+    }
+    throw err
+  }
 }
