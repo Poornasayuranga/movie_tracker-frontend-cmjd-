@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, NavLink, useNavigate, Outlet } from 'react-router-dom'
+import { logoutUser } from '../services/authService'
 import {
   Film,
   Tv2,
@@ -65,7 +66,7 @@ export default function Layout() {
 
   const handleLogout = () => {
     try {
-      localStorage.removeItem('movieTracker_user')
+      logoutUser()
     } catch (err) {
       console.error(err)
     }

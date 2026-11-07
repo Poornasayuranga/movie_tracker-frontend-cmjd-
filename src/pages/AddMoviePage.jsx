@@ -19,16 +19,14 @@ export default function AddMoviePage() {
   const navigate = useNavigate()
 
   // Form states - empty without dummy data
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    genre: '',
-    duration: '',
-    language: '',
-    releaseDate: '',
-    specialDetails: '',
-    posterUrl: '',
-  })
+ const [formData, setFormData] = useState({
+  title: '',
+  description: '',
+  genere: '',
+  language: '',
+  releaseDate: '',
+  status: ''
+})
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -40,36 +38,60 @@ export default function AddMoviePage() {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setSuccess('')
+  e.preventDefault()
 
-    if (!formData.title.trim()) {
-      setError('Movie title is required.')
-      return
-    }
+  setError('')
+  setSuccess('')
 
-    setLoading(true)
-
-    try {
-      // Send to backend service
-      await addMovie(formData)
-      setSuccess('Movie added successfully! Redirecting to movies list...')
-      setTimeout(() => {
-        navigate('/movies')
-      }, 1200)
-    } catch (err) {
-      console.warn('Backend API error, movie recorded locally:', err)
-      // Provide positive UX if backend is not actively responding
-      setSuccess('Movie details submitted successfully! Redirecting...')
-      setTimeout(() => {
-        navigate('/movies')
-      }, 1200)
-    } finally {
-      setLoading(false)
-    }
+  if (!formData.title.trim()) {
+    setError('Movie title is required.')
+    return
   }
 
+  if (!formData.status) {
+    setError('Please select movie status.')
+    return
+  }
+
+  setLoading(true)
+
+  try {
+
+    // Create backend-compatible JSON payload
+    const movieData = {
+      title: formData.title,
+      description: formData.description,
+      language: formData.language,
+      genere: formData.genere,
+      releaseDate: formData.releaseDate,
+      status: formData.status
+    }
+
+    // Send POST request
+    const response = await addMovie(movieData)
+
+    console.log('Movie added:', response.data)
+
+    setSuccess('Movie added successfully!')
+
+    setTimeout(() => {
+      navigate('/movies')
+    }, 1200)
+
+  } catch (err) {
+
+    console.error('Movie adding failed:', err)
+
+    setError(
+      err.response?.data?.message ||
+      'Failed to add movie. Please try again.'
+    )
+
+  } finally {
+    setLoading(false)
+  }
+}
+    
   return (
     <div className="space-y-6 animate-fade-in-up max-w-4xl mx-auto">
       {/* Top Navigation & Breadcrumb */}
@@ -141,14 +163,31 @@ export default function AddMoviePage() {
                 Genre / Category
               </label>
               <input
-                type="text"
-                name="genre"
-                value={formData.genre}
-                onChange={handleChange}
-                placeholder="e.g. Sci-Fi • Action • Adventure"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#3B4FE8] focus:ring-2 focus:ring-[#3B4FE8]/20 transition-all placeholder:text-gray-400"
-              />
+                 type="text"
+                 name="genere"
+                 value={formData.genere}
+                 onChange={handleChange}
+                 placeholder="e.g. Sci-Fi, Action, Adventure"
+                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm"
+/>
             </div>
+            <div>
+  <label className="block text-xs font-bold text-gray-700 mb-2">
+    Movie Status
+  </label>
+
+  <select
+    name="status"
+    value={formData.status}
+    onChange={handleChange}
+    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm"
+  >
+    <option value="">Select Status</option>
+    <option value="UPCOMING">Now Showing</option>
+    <option value="NOW_SHOWING">Upcoming</option>
+     <option value="ENDED">Upcoming</option>
+  </select>
+</div>
           </div>
 
           {/* Row 2: Duration, Language & Release Date */}

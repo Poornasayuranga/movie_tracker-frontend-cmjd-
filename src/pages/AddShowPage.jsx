@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import {
   Tv2,
@@ -8,64 +8,162 @@ import {
   Film,
   Theater,
   DollarSign,
-  Tag,
-  FileText,
-  Sparkles,
   CheckCircle2,
   AlertCircle,
+  LogIn,
+  RefreshCw,
 } from 'lucide-react'
+
 import { addShow } from '../services/showService'
+import { getAllMovies } from '../services/movieService'
+import { getAllTheatres } from '../services/theatreService'
+import { getToken } from '../utils/tokenUtils'
 
 export default function AddShowPage() {
   const navigate = useNavigate()
 
-  // Form states - clean without dummy data
+  // Form states
   const [formData, setFormData] = useState({
-    showName: '',
-    movie: '',
-    theatre: '',
+    movieId: '',
+    theatreId: '',
     showDate: '',
     showTime: '',
     ticketPrice: '',
-    duration: '',
-    category: '',
-    description: '',
-    specialDetails: '',
   })
 
+  // Loaded database entities for easy selection
+  const [availableMovies, setAvailableMovies] = useState([])
+  const [availableTheatres, setAvailableTheatres] = useState([])
+
+  // Status states
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const isAuthenticated = Boolean(getToken())
 
+  // Load available movies and theatres from backend
+  useEffect(() => {
+    let ignore = false
+
+    const loadOptions = async () => {
+      try {
+        const [moviesRes, theatresRes] = await Promise.allSettled([
+          getAllMovies(),
+          getAllTheatres(),
+        ])
+
+        if (!ignore) {
+          if (moviesRes.status === 'fulfilled' && Array.isArray(moviesRes.value)) {
+            setAvailableMovies(moviesRes.value)
+          }
+          if (theatresRes.status === 'fulfilled' && Array.isArray(theatresRes.value)) {
+            setAvailableTheatres(theatresRes.value)
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to pre-load movies or theatres:', err)
+      }
+    }
+
+    loadOptions()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
   }
 
+  // Submit show data to backend
   const handleSubmit = async (e) => {
     e.preventDefault()
+
     setError('')
     setSuccess('')
 
-    if (!formData.showName.trim() && !formData.movie.trim()) {
-      setError('Please provide a show name or movie title.')
+    // Basic validation
+    if (
+      !formData.movieId ||
+      !formData.theatreId.toString().trim() ||
+      !formData.showDate ||
+      !formData.showTime ||
+      !formData.ticketPrice
+    ) {
+      setError('Please fill in all required fields.')
       return
     }
 
+    const movieId = Number(formData.movieId)
+    const ticketPrice = Number(formData.ticketPrice)
+    const theatreId = String(formData.theatreId).trim()
+
+    if (!Number.isInteger(movieId) || movieId <= 0) {
+      setError('Please select or enter a valid Movie ID (positive integer).')
+      return
+    }
+
+    if (!theatreId) {
+      setError('Please select or enter a valid Theatre ID.')
+      return
+    }
+
+    if (!Number.isFinite(ticketPrice) || ticketPrice <= 0) {
+      setError('Please enter a valid ticket price greater than 0.')
+      return
+    }
+
+    // Prepare JSON matching backend ShowDto & entities
+    const showData = {
+      movieId: movieId,
+      theatreId: theatreId,
+      showDate: formData.showDate,
+      showTime: formData.showTime,
+      ticketPrice: ticketPrice,
+      // Nested object representations for maximum backend compatibility
+      movie: {
+        id: movieId,
+        ID: movieId,
+      },
+      theatre: {
+        theatreId: theatreId,
+        id: theatreId,
+      },
+    }
+
+    console.log('[AddShowPage] Submitting showData to backend:', showData)
     setLoading(true)
 
     try {
-      await addShow(formData)
-      setSuccess('Show schedule added successfully! Redirecting to shows list...')
+      const response = await addShow(showData)
+      console.log('[AddShowPage] Backend response:', response)
+
+      setSuccess('Show schedule added successfully! Redirecting...')
+
       setTimeout(() => {
         navigate('/shows')
       }, 1200)
     } catch (err) {
-      console.warn('Backend API error, show recorded locally:', err)
-      setSuccess('Show schedule submitted successfully! Redirecting...')
-      setTimeout(() => {
-        navigate('/shows')
-      }, 1200)
+      console.error('[AddShowPage] Submission error:', err)
+
+      const backendMsg =
+        err.response?.data?.message ||
+        (typeof err.response?.data === 'string' ? err.response?.data : null) ||
+        err.response?.data?.error ||
+        err.message ||
+        'Failed to add show. Please verify backend connection.'
+
+      if (err.response?.status === 403 || err.response?.status === 401) {
+        setError('Authentication required: Please sign in to add shows to the backend.')
+      } else {
+        setError(backendMsg)
+      }
     } finally {
       setLoading(false)
     }
@@ -73,7 +171,7 @@ export default function AddShowPage() {
 
   return (
     <div className="space-y-6 animate-fade-in-up max-w-4xl mx-auto">
-      {/* Top Navigation & Breadcrumb */}
+      {/* Top Navigation */}
       <div className="flex items-center justify-between">
         <Link
           to="/shows"
@@ -82,6 +180,7 @@ export default function AddShowPage() {
           <ArrowLeft size={16} />
           <span>Back to Shows</span>
         </Link>
+
         <span className="text-xs px-2.5 py-1 rounded-full bg-purple-50 text-[#7C3AED] font-semibold">
           Showtime Management
         </span>
@@ -95,12 +194,32 @@ export default function AddShowPage() {
           </div>
           Add New Show
         </h1>
+
         <p className="text-gray-500 text-sm mt-1">
-          Schedule a new showtime, associate it with a movie and theatre, and configure ticket pricing.
+          Schedule a new showtime, associate it with an existing movie and theatre, and configure ticket pricing.
         </p>
       </div>
 
-      {/* Alerts */}
+      {/* Auth Warning if not signed in */}
+      {!isAuthenticated && (
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={18} className="text-amber-600 flex-shrink-0" />
+            <span>
+              You are currently not signed in. The backend requires a valid JWT token to add shows.
+            </span>
+          </div>
+          <Link
+            to="/login"
+            className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors"
+          >
+            <LogIn size={13} />
+            <span>Sign In</span>
+          </Link>
+        </div>
+      )}
+
+      {/* Error Message */}
       {error && (
         <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
           <AlertCircle size={18} className="text-red-500 flex-shrink-0" />
@@ -108,6 +227,7 @@ export default function AddShowPage() {
         </div>
       )}
 
+      {/* Success Message */}
       {success && (
         <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm flex items-center gap-2">
           <CheckCircle2 size={18} className="text-emerald-500 flex-shrink-0" />
@@ -118,85 +238,123 @@ export default function AddShowPage() {
       {/* Form Card */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Row 1: Show Name & Movie Title */}
+          {/* Row 1: Movie Selection and Theatre Selection */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* Movie Field */}
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Tv2 size={14} className="text-[#7C3AED]" />
-                Show Name / Title <span className="text-red-500">*</span>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Film size={14} className="text-[#7C3AED]" />
+                  Movie <span className="text-red-500">*</span>
+                </span>
+                {formData.movieId && (
+                  <span className="text-[11px] font-normal text-purple-600">
+                    ID: {formData.movieId}
+                  </span>
+                )}
               </label>
-              <input
-                type="text"
-                name="showName"
-                value={formData.showName}
-                onChange={handleChange}
-                required
-                placeholder="e.g. Dune: Part Two - Evening Premiere"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all placeholder:text-gray-400"
-              />
+
+              {availableMovies.length > 0 ? (
+                <select
+                  name="movieId"
+                  value={formData.movieId}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all bg-white"
+                >
+                  <option value="">Select an existing movie</option>
+                  {availableMovies.map((movie) => {
+                    const id = movie.id || movie.ID || movie.movieId
+                    return (
+                      <option key={id} value={id}>
+                        {movie.title || movie.name} (ID: {id})
+                      </option>
+                    )
+                  })}
+                </select>
+              ) : (
+                <input
+                  type="number"
+                  name="movieId"
+                  value={formData.movieId}
+                  onChange={handleChange}
+                  min="1"
+                  step="1"
+                  required
+                  placeholder="Enter existing Movie ID (e.g. 1)"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all placeholder:text-gray-400"
+                />
+              )}
+
+              <p className="text-xs text-gray-400 mt-1.5">
+                Must match an existing movie in the database.
+              </p>
             </div>
 
+            {/* Theatre Field */}
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Film size={14} className="text-[#7C3AED]" />
-                Associated Movie
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Theater size={14} className="text-[#7C3AED]" />
+                  Theatre <span className="text-red-500">*</span>
+                </span>
+                {formData.theatreId && (
+                  <span className="text-[11px] font-normal text-purple-600">
+                    ID: {formData.theatreId}
+                  </span>
+                )}
               </label>
-              <input
-                type="text"
-                name="movie"
-                value={formData.movie}
-                onChange={handleChange}
-                placeholder="e.g. Dune: Part Two"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all placeholder:text-gray-400"
-              />
+
+              {availableTheatres.length > 0 ? (
+                <select
+                  name="theatreId"
+                  value={formData.theatreId}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all bg-white"
+                >
+                  <option value="">Select an existing theatre</option>
+                  {availableTheatres.map((theatre) => {
+                    const id = theatre.theatreId || theatre.id || theatre.ID
+                    return (
+                      <option key={id} value={id}>
+                        {theatre.theatreName || theatre.name || theatre.venue} (ID: {id})
+                      </option>
+                    )
+                  })}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  name="theatreId"
+                  value={formData.theatreId}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter Theatre ID (e.g. T01 or 1)"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all placeholder:text-gray-400"
+                />
+              )}
+
+              <p className="text-xs text-gray-400 mt-1.5">
+                Must match an existing theatre in the database.
+              </p>
             </div>
           </div>
 
-          {/* Row 2: Theatre / Venue & Category */}
+          {/* Row 2: Date and Time */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Theater size={14} className="text-[#7C3AED]" />
-                Theatre / Venue
-              </label>
-              <input
-                type="text"
-                name="theatre"
-                value={formData.theatre}
-                onChange={handleChange}
-                placeholder="e.g. Liberty Cinema - Screen 1, Colombo"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all placeholder:text-gray-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Tag size={14} className="text-[#7C3AED]" />
-                Category / Format
-              </label>
-              <input
-                type="text"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                placeholder="e.g. IMAX 3D, Dolby Atmos, Standard 2D, VIP"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all placeholder:text-gray-400"
-              />
-            </div>
-          </div>
-
-          {/* Row 3: Date, Time, Duration & Ticket Price */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <Calendar size={14} className="text-[#7C3AED]" />
-                Show Date
+                Show Date <span className="text-red-500">*</span>
               </label>
+
               <input
                 type="date"
                 name="showDate"
                 value={formData.showDate}
                 onChange={handleChange}
+                required
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all"
               />
             </div>
@@ -204,77 +362,37 @@ export default function AddShowPage() {
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <Clock size={14} className="text-[#7C3AED]" />
-                Show Time
+                Show Time <span className="text-red-500">*</span>
               </label>
+
               <input
                 type="time"
                 name="showTime"
                 value={formData.showTime}
                 onChange={handleChange}
+                required
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all"
               />
             </div>
-
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Clock size={14} className="text-[#7C3AED]" />
-                Duration
-              </label>
-              <input
-                type="text"
-                name="duration"
-                value={formData.duration}
-                onChange={handleChange}
-                placeholder="e.g. 2h 45m"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all placeholder:text-gray-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <DollarSign size={14} className="text-[#7C3AED]" />
-                Ticket Price
-              </label>
-              <input
-                type="text"
-                name="ticketPrice"
-                value={formData.ticketPrice}
-                onChange={handleChange}
-                placeholder="e.g. LKR 1,500 or $12.50"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all placeholder:text-gray-400"
-              />
-            </div>
           </div>
 
-          {/* Row 4: Description */}
+          {/* Row 3: Ticket Price */}
           <div>
             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <FileText size={14} className="text-[#7C3AED]" />
-              Description
+              <DollarSign size={14} className="text-[#7C3AED]" />
+              Ticket Price (LKR) <span className="text-red-500">*</span>
             </label>
-            <textarea
-              name="description"
-              rows={3}
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Add key highlights or synopsis for this show schedule..."
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all placeholder:text-gray-400 resize-y"
-            />
-          </div>
 
-          {/* Row 5: Other Special Details */}
-          <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Sparkles size={14} className="text-[#7C3AED]" />
-              Other Special Details
-            </label>
-            <textarea
-              name="specialDetails"
-              rows={3}
-              value={formData.specialDetails}
+            <input
+              type="number"
+              name="ticketPrice"
+              value={formData.ticketPrice}
               onChange={handleChange}
-              placeholder="e.g. English subtitles included, Complimentary refreshments for VIP, Advance booking discount..."
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all placeholder:text-gray-400 resize-y"
+              min="0.01"
+              step="0.01"
+              required
+              placeholder="e.g. 1500.00"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all placeholder:text-gray-400"
             />
           </div>
 
@@ -287,13 +405,17 @@ export default function AddShowPage() {
             >
               Cancel
             </button>
+
             <button
               type="submit"
               disabled={loading}
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-sm font-semibold transition-all shadow-md shadow-purple-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <>
+                  <RefreshCw size={16} className="animate-spin" />
+                  <span>Saving Show...</span>
+                </>
               ) : (
                 <>
                   <Tv2 size={16} />
@@ -307,4 +429,3 @@ export default function AddShowPage() {
     </div>
   )
 }
-

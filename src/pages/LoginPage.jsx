@@ -137,8 +137,8 @@ export default function LoginPage({ initialMode = 'login' }) {
         // Backend returns JWT token
         await loginUser(loginDetails)
 
-        // Redirect after successful login
-        const destination = location.state?.from || '/'
+        // Redirect after successful login (default to movies page)
+        const destination = location.state?.from || '/movies'
 
         navigate(destination, { replace: true })
       }

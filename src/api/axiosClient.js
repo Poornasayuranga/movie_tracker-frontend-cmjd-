@@ -11,10 +11,21 @@ const axiosClient = axios.create({
 // Automatically attach JWT token
 axiosClient.interceptors.request.use(
   (config) => {
-    const token = getToken()
+    const url = config.url || ''
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    // NEVER attach Authorization header to public auth requests (login, register)
+    const isAuthRoute =
+      url.includes('/auth/login') ||
+      url.includes('/auth/register') ||
+      url.startsWith('/auth')
+
+    if (isAuthRoute) {
+      delete config.headers.Authorization
+    } else {
+      const token = getToken()
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
     }
 
     return config
