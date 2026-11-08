@@ -8,12 +8,12 @@ import { getAllTheatres } from '../services/theatreService'
 export default function TheatrePage() {
   const navigate = useNavigate()
   const [events, setEvents] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(true)   
   const [error, setError] = useState('')
 
   // Fetch theatre events from backend
   useEffect(() => {
-    const fetchTheatres = async () => {
+    const fetchTheatres = async () => {      
       try {
         const data = await getAllTheatres()
         setEvents(data || [])
@@ -22,16 +22,16 @@ export default function TheatrePage() {
         setError('Failed to load theatre events. Please try again.')
       } finally {
         setLoading(false)
-      }
+      } 
     }
-
-    fetchTheatres()
+   
+    fetchTheatres()  
   }, [])
 
   // Featured event
   const featuredEvent = events.length > 0 ? events[0] : null
 
-  return (
+  return (  
     <div className="space-y-6 animate-fade-in-up">
       {/* Page Header */}
       <div className="flex items-center justify-between">
@@ -88,7 +88,7 @@ export default function TheatrePage() {
           </>
         ) : (
           <h2 className="text-xl font-bold">
-            No featured event available
+            No featured event available 
           </h2>
         )}
 

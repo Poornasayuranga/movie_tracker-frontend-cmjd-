@@ -13,6 +13,7 @@ import SettingsPage from './pages/SettingsPage'
 import AboutPage from './pages/AboutPage'
 import ContactPage from './pages/ContactPage'
 import BookingDetailsPage from './pages/BookingDetailsPage'
+import TicketSearchResultsPage from './pages/TicketSearchResultsPage'
 
 
 export default function App() {
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="add-theatre" element={<AddTheatrePage />} />
 
           <Route path="tickets" element={<TicketsPage />} />
+          <Route path="tickets/results" element={<TicketSearchResultsPage />} />
           <Route path="booking-details" element={<BookingDetailsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="about" element={<AboutPage />} />
